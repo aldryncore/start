@@ -3,7 +3,11 @@
 [![Travis](https://img.shields.io/travis/aldryncore/start.svg?style=flat-square)](https://travis-ci.org/aldryncore/start)
 [![PyPI](https://img.shields.io/pypi/v/start.svg?style=flat-square)](https://pypi.python.org/pypi/start/)
 
-Very simple command to start a single process from a Procfile.
+Command to start a single process from a Procfile.
+
+``start`` does shell variable expansion for the command string and starts the
+command with ``exec``. This means that the command will be the only thing
+running and will receive any signals sent to it directly.
 
 Installation:
 
