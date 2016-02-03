@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 from setuptools import setup
+import start
 
 
 setup(
     name='start',
-    version='0.1',
+    version=start.__version__,
     description='Very simple command to start a single process from a Procfile',
     author='Divio AG',
     author_email='aldryn@divio.ch',
@@ -13,7 +14,12 @@ setup(
     platforms=['OS Independent'],
     py_modules=['start'],
     install_requires=[
-        'pyaml',
+    ],
+    setup_requires=[
+        'pytest-runner',
+    ],
+    tests_require=[
+        'pytest',
     ],
     entry_points="""
     [console_scripts]
