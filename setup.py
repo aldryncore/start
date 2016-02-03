@@ -13,7 +13,6 @@ setup(
     platforms=['OS Independent'],
     py_modules=['start'],
     install_requires=[
-        'pyaml',
         'six',
     ],
     setup_requires=[

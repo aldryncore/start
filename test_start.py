@@ -78,3 +78,33 @@ def test_parse_command():
     ]
     for test in tests:
         assert test[1] == start.parse_command(test[0], env=test[2])
+
+
+def test_procfile_parsing():
+    procfile_tests = [
+        (
+            (
+                'web: echo "Hi"\n'
+                '# comment for other\n'
+                'other: echo "other"'
+            ),
+            {
+                'web': 'echo "Hi"',
+                'other': 'echo "other"',
+            }
+        ),
+        (
+            (
+                'web: run --concurrency=${CONCURRENCY:-4}\n'
+                'other: echo "other"'
+            ),
+            {
+                'web': 'run --concurrency=${CONCURRENCY:-4}',
+                'other': 'echo "other"',
+            }
+        ),
+    ]
+    for procfile_test in procfile_tests:
+        parsed_procfile = start.parse_procfile(procfile_test[0])
+        for service, command in procfile_test[1].items():
+            assert parsed_procfile.processes[service] == command

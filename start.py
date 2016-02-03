@@ -1,23 +1,65 @@
 #!/usr/bin/env python
+import collections
 import os
+import re
 import shlex
 import six
 import subprocess
 import sys
-import yaml
+
+
+# === Procfile parsing ===
+# borrowed from honcho
+# https://github.com/nickstenning/honcho/blob/f1b46387654544e6577a9748423ee22bd95c5f75/honcho/environ.py#L16
+# https://github.com/nickstenning/honcho/blob/f1b46387654544e6577a9748423ee22bd95c5f75/honcho/environ.py#L52-L70
+#
+# Why not use the yaml parser? Because it interprets stuff it shouldn't. e.g
+# web: echo "MYVAR: ${MYVAR}"
+# Would cause yaml to throw a parse exception, although this is valid for a
+# Procfile.
+PROCFILE_LINE = re.compile(r'^([A-Za-z0-9_]+):\s*(.+)$')
+
+
+class Procfile(object):
+    """A data structure representing a Procfile"""
+
+    def __init__(self):
+        self.processes = collections.OrderedDict()
+
+    def add_process(self, name, command):
+        assert name not in self.processes, \
+            "process names must be unique within a Procfile"
+        self.processes[name] = command
+
+
+def parse_procfile(contents):
+    p = Procfile()
+    for line in contents.splitlines():
+        m = PROCFILE_LINE.match(line)
+        if m:
+            p.add_process(m.group(1), m.group(2))
+    return p
+# =======================
 
 
 def expandvars(string, env=None):
     """
+    Why this way of expanding environment vars is needed:
     os.path.expandvars() does not handle defaults ( ${MYVAR:-default} ) and also
     does not return an empty string for the case where the variable is not set.
+
+    Instead of parsing them at all we *could* also run the whole command behind
+    ['sh', '-c', command]
+    That would naturally expand all the variables the way we want.
+    But the problem with that is sh continues to run as the parent process and
+    it will not forward Signals (like KILL) to the child process, causing
+    orphaned processes all over the place if you try to kill this process.
+
     So we are using the default shell and echo itself to escape those pesky
-    vars.
-    I suggest that next to "naming things" and "cache invalidation", we add
-    "escaping" to the list of hardest problems.
+    vars before executing the actual command.
     """
     env = env if env is not None else os.environ
-    # prepare string for being used inside double quotes
+    # prepare string for being used inside double quotes with printf or echo.
     string = (
         string
         .replace('\\', '\\\\')  # replace \ with \\
@@ -27,7 +69,7 @@ def expandvars(string, env=None):
         ['sh', '-c', '''printf '%s' "{}"'''.format(string)], env=env)
 
 
-def parse_command(command, env=None):
+def parse_command(command, env=None, expand=True):
     """
     takes a string or a list of args and returns a list of args where any
     shell style environment variables have been expanded.
@@ -35,11 +77,9 @@ def parse_command(command, env=None):
     env = env if env is not None else os.environ
     if isinstance(command, six.string_types):
         command = shlex.split(command)
-    newcmd = []
-    for arg in command:
-        newarg = expandvars(arg, env=env)
-        newcmd.append(newarg)
-    return newcmd
+    if expand:
+        command = [expandvars(arg, env=env) for arg in command]
+    return command
 
 
 def cli():
@@ -57,7 +97,7 @@ def cli():
         sys.exit('no Procfile path defined')
 
     with open(procfile_path) as fh:
-        command = yaml.load(fh)[command_name]
+        command = parse_procfile(fh.read()).processes[command_name]
 
     command = parse_command(command, env=os.environ)
     os.execvpe(command[0], command + extra_args, os.environ)
