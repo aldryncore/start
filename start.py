@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import shlex
+import six
 import subprocess
 import sys
 import yaml
@@ -32,7 +33,7 @@ def parse_command(command, env=None):
     shell style environment variables have been expanded.
     """
     env = env if env is not None else os.environ
-    if isinstance(command, basestring):
+    if isinstance(command, six.string_types):
         command = shlex.split(command)
     newcmd = []
     for arg in command:

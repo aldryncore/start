@@ -14,6 +14,7 @@ setup(
     py_modules=['start'],
     install_requires=[
         'pyaml',
+        'six',
     ],
     setup_requires=[
         'pytest-runner',
