@@ -3,9 +3,17 @@ import collections
 import os
 import re
 import shlex
-import six
 import subprocess
 import sys
+
+
+# === everything we need from six ===
+PY3 = sys.version_info[0] == 3
+if PY3:
+    string_types = str,
+else:
+    string_types = basestring,
+# ===================================
 
 
 # === Procfile parsing ===
@@ -75,7 +83,7 @@ def parse_command(command, env=None, expand=True):
     shell style environment variables have been expanded.
     """
     env = env if env is not None else os.environ
-    if isinstance(command, six.string_types):
+    if isinstance(command, string_types):
         command = shlex.split(command)
     if expand:
         command = [expandvars(arg, env=env) for arg in command]
