@@ -1,5 +1,8 @@
 # start
 
+[![Travis](https://img.shields.io/travis/aldryncore/start.svg?style=flat-square)](https://travis-ci.org/aldryncore/start)
+[![PyPI](https://img.shields.io/pypi/v/start.svg?style=flat-square)](https://pypi.python.org/pypi/start/)
+
 Very simple command to start a single process from a Procfile.
 
 Installation:
