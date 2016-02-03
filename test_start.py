@@ -75,6 +75,35 @@ def test_parse_command():
 
         # special cases
         ('${LS_CMD} -lAF', [b'ls', b'-lAF'], {'LS_CMD': "ls"}),
+
+        # tricky cases
+        # ------------
+
+        # shell string concatenation
+        (
+            ''' echo 'I want a single quote here: -> '"'"' <- ' '''.strip(),
+            [b'echo', b"I want a single quote here: -> ' <- "],
+            {}
+        ),
+        # shell string concatenation II
+        (
+            ''' echo "I want a single quote here: -> ' <- " '''.strip(),
+            [b'echo', b"I want a single quote here: -> ' <- "],
+            {}
+        ),
+        # shell string concatenation III
+        (
+            ''' echo "I want a double quote here: -> \\" <- " '''.strip(),
+            [b'echo', b'I want a double quote here: -> " <- '],
+            {}
+        ),
+        # subshell
+        (
+            ''' echo "I want a command result here: -> `cd /;pwd` <- " '''.strip(),
+            [b'echo', b'I want a command result here: -> / <- '],
+            {}
+        ),
+
     ]
     for test in tests:
         assert test[1] == start.parse_command(test[0], env=test[2])
